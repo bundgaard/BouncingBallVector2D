@@ -18,7 +18,7 @@ public class BallWindow extends JFrame implements KeyListener{
     
     public BallWindow() {
         setLayout(new BorderLayout());
-        setSize(640,480);
+        setSize(800,600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         BallPanel ballPanel = new BallPanel(this);

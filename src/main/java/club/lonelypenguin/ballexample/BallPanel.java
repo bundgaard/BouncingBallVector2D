@@ -5,157 +5,139 @@
  */
 package club.lonelypenguin.ballexample;
 
+import club.lonelypenguin.interfaces.IShape;
 import club.lonelypenguin.math.Vector2D;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.Random;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 /**
  *
  * @author IPsoft
  */
-public class BallPanel extends JPanel implements Runnable, MouseListener, MouseMotionListener{
-    
-    Vector2D mouse;
-    Vector2D center;
-    Vector2D velocity;
-    Vector2D location;
-    
+public class BallPanel extends JPanel implements Runnable {
+
     BallWindow parent;
     
+    ArrayList<IShape> shapes = new ArrayList<>();
     
     public BallPanel(BallWindow parent) {
-        this.parent = parent;       
-        
+        this.parent = parent;
         init();
-        
     }
-    
+
     private void init() {
         Random rand = new Random();
-        
-        mouse = new Vector2D(0.0, 0.0);
-        location = new Vector2D(10,10);
-        velocity = new Vector2D(rand.nextDouble() * 2.2, rand.nextDouble() * 2.2);
-        
-        
-        center = new Vector2D( 1.0 * ( parent.getSize().width / 2), 1.0 * (parent.getSize().height / 2) );
-        addMouseListener(this);
-        addMouseMotionListener(this);
-        
+        Mover mover = new Mover();
+
+        Color colors[] = new Color[5];
+        colors[0] = Color.gray;
+        colors[1] = Color.gray.brighter();
+        colors[2] = Color.yellow.darker();
+        colors[3] = Color.yellow.brighter();
+        colors[4] = new Color(127, 127, 127);
+
+        shapes.add(mover);
+
         Thread t = new Thread(this);
         t.start();
-        
-        
-       
+
     }
-    
+
     @Override
     public void run() {
-        try { 
-            while ( true ) {
-                location = location.Addition(velocity);
 
-                repaint();
-                Thread.sleep(100);
+        try {
+            while (true) {
+                for(IShape shape : shapes) {
+                    shape.update();
+                    shape.checkEdge();
+                    repaint();
+                }
+//                for (Ball b : balls) {
+//                    Vector2D acceleration = new Vector2D(0.02, 0.1);
+//
+//                    b.getVelocity().addition(acceleration);
+//                    b.getVelocity().limit(10);
+//                    b.getLocation().addition(b.getVelocity());
+//                    acceleration.multiply(0);
+//                    repaint();
+//                }
+//                for ( int i = 0; i < 5; i++) 
+//                {
+//                    
+//                    balls[i].setLocation(balls[i].getLocation().Addition(balls[i].getVelocity()));
+//                    repaint();
+//                }
+                Thread.sleep(35);
             }
-            
-        }catch (InterruptedException ie) {
+        } catch (InterruptedException ie) {
             System.err.println("" + ie.getMessage());
         }
-        
     }
-    
-    
-    private void checkEdge() {
-        if ( (location.getX() > 640) ) {
-            location.setX(0);
-        } else if ( location.getX() < 0 ) {
-            location.setX(640);
-        }
-        
-        if ( location.getY() > 480 ) {
-            location.setY(0);
-        } else if ( location.getY() < 0){
-            location.setY(480); 
-        }
+
+    @Override
+    public void update(Graphics g) {
+        paint(g);
     }
-    
+
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        checkEdge();
+        Graphics2D g2 = (Graphics2D) g;
         
-        g.drawString(
-                String.format("mouseX %d mouseY %d centerX %d, centerY %d magnitude %d", 
-                        (int) mouse.getX(),(int) mouse.getY(),
-                        (int) center.getX(), (int) center.getY(),
-                        (int) mouse.Magnitude()
-                ), 10, 10);
+        Liquid l = new Liquid(0, 240, 640, 240, 0.9);
+        g.setColor(new Color(128,128,255,128));
         
-        mouse = mouse.Subtract(center).Normalize().Multiply(50.0);
-        
-        g.setColor(Color.GREEN);
-        g.fillOval((int) location.getX(), (int) location.getY(), 64, 64);
-        g.setColor(Color.BLACK);
-        
-        g.translate((int) center.getX(), (int) center.getY() );
-        g.drawLine(0,0,(int) mouse.getX(), (int) mouse.getY());
-        g.translate((int)-center.getX(),(int)-center.getY());
-        g.fillRect(0,parent.getSize().height - 70,(int) mouse.Magnitude(),10);
-       
-    }
+        g.fillRect(0,480 >> 1, 640, 480 >> 1);
+        for(IShape shape : shapes) {
+            if ( shape.isInside(l)) {
+                shape.drag(l);
+            }
+            shape.display(g);
+            
+        }
 
-    @Override
-    public void mouseClicked(MouseEvent e) {
-    
-    }
+//        BufferedImage offscreenImage = new BufferedImage(640, 480, BufferedImage.TYPE_INT_ARGB);
+//        Graphics2D offscreenGraphics = offscreenImage.createGraphics();
+//        offscreenGraphics.clearRect(0, 0, 640, 480);
+//        offscreenGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//
+//        Vector2D wind = new Vector2D(0.001, 0);
+//
+//        Liquid liquid = new Liquid(0, 480 >> 1, 640, 480 >> 1, 0.1);
+//        offscreenGraphics.setColor(Color.blue);
+//        offscreenGraphics.fillRect(0, 480 >> 1, 640, 480 >> 1);
+//        for (Shape s : shapes) {
+//            s.display(g);
+//        }
+//        for (Ball b : balls) {
+//            
+//            if ( b.isInside(liquid)) {
+//                b.drag(liquid);
+//            }
+//            double m = 0.1 * b.getMass();
+//            Vector2D gravity = new Vector2D(0,m);
+//            
+//            b.applyForce(gravity);
+//
+//            
+//            //b.checkEdgeBounce(640, 480);
+//            offscreenGraphics.setColor(b.getColor());
+//            offscreenGraphics.fillOval((int) b.getLocation().getX(), (int) b.getLocation().getY(), (int) (b.getMass() * b.getSize().width * 0.3), (int) (b.getMass() * b.getSize().height * .3));
+//            b.checkEdgeChangeVelocity(640, 480);
+//        }
+//        
 
-    @Override
-    public void mousePressed(MouseEvent e) {
-    
+//        g.setColor(Color.RED);
+//        g.drawImage(offscreenImage, 0, 0, this);
+//        g.drawRect(0, 0, 640 - 1, 480 - 1);
     }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-    
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-        mouse.setX(e.getXOnScreen());
-        mouse.setY(e.getYOnScreen());
-        repaint();
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-        mouse.setX(e.getXOnScreen());
-        mouse.setY(e.getYOnScreen());
-        repaint();
-     
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        mouse.setX(e.getX());
-        mouse.setY(e.getY());
-        repaint();
-    }
-    
-    
-    
-    
-    
-    
 }

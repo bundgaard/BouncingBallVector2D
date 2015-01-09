@@ -5,6 +5,7 @@
  */
 package club.lonelypenguin.ballexample;
 
+import club.lonelypenguin.math.Vector2D;
 import javax.swing.SwingUtilities;
 
 /**
@@ -14,6 +15,7 @@ import javax.swing.SwingUtilities;
 public class App {
     
     public static void main(String args[]){
+        
         final BallWindow ballWindow= new BallWindow();
         Runnable r = new Runnable() {
             @Override
